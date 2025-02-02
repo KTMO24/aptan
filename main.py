@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # =============================================================================
 # BSD 3-Clause License
-# 
+#
 # Copyright (c) 2025, Travis Michael O’Dell
 # All rights reserved.
 #
@@ -32,20 +32,16 @@
 # =============================================================================
 
 """
-Merged Tool - Jedimt/Yesco with Interface Mapper
+Merged Tool - Jedimt/Yesco with Interface Mapper (Enhanced Edition)
 Author: Travis Michael O’Dell
 License: BSD 3-Clause
 
-This merged system implements:
-  • Core Jedimt functionality:
-       - Platform detection and configuration.
-       - Apt package installation (via tar.gz) with native build or Gemini translation.
-       - Basic shell commands (cd, compile, run, pass-through).
-  • A Yesco CLI (via Click and Rich) for managing projects, signing, compiling source,
-    packaging applications, managing an iOS simulator, and debugging.
-  • A Kivy-based interface mapper (optional) for UI code ingestion and generation via Gemini.
-  • IPython magic extension for AptAn.
-  • Interactive UI with ipywidgets (notebook-friendly).
+Features:
+  • Core Jedimt (shell commands, apt install, compile, run)
+  • Yesco CLI (via Click/Rich) for build, packaging, signing, iOS simulator
+  • Kivy-based interface mapper (optional)
+  • IPython magic extension for AptAn
+  • Enhanced ipywidgets UI with logs, progress bars, state mgmt
 """
 
 import os
@@ -64,9 +60,6 @@ import base64
 import uuid
 import shlex
 
-# -----------------------------
-# External Libraries
-# -----------------------------
 try:
     import click
 except ImportError:
@@ -81,7 +74,6 @@ except ImportError:
     print("Please install rich: pip install rich")
     sys.exit(1)
 
-# Kivy imports (optional)
 try:
     import kivy
     from kivy.app import App
@@ -98,21 +90,14 @@ try:
 except ImportError:
     kivy_available = False
 
-# ipywidgets (optional)
 try:
     import ipywidgets as widgets
     from IPython.display import display, HTML, clear_output
     from IPython.core.magic import (
-        Magics,
-        magics_class,
-        line_magic,
-        cell_magic,
-        line_cell_magic,
+        Magics, magics_class, line_magic, cell_magic, line_cell_magic
     )
     from IPython.core.magic_arguments import (
-        argument,
-        magic_arguments,
-        parse_argstring
+        argument, magic_arguments, parse_argstring
     )
     from IPython.core.getipython import get_ipython
     ipywidgets_available = True
@@ -121,17 +106,14 @@ except ImportError:
 
 console = Console()
 
-# A simple config to toggle debugging if needed
 config = {
     "enable_debugging": True
 }
-
 __version__ = "0.4.5"
 
-
-# =============================================================================
-# 1) PlatformConfig - system detection
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 1) PlatformConfig
+# -----------------------------------------------------------------------------
 class PlatformConfig:
     def __init__(self):
         self.system = platform.system()
@@ -143,35 +125,32 @@ class PlatformConfig:
         self.config = self.load_config()
 
     def load_config(self):
-        """Load platform-specific configurations from platform_config.json (optional)."""
         config_file = "platform_config.json"
         try:
             with open(config_file, "r") as f:
-                config_data = json.load(f)
-                return config_data.get(self.system, {})
+                data = json.load(f)
+                return data.get(self.system, {})
         except FileNotFoundError:
-            print(f"Warning: Configuration file '{config_file}' not found. Using default settings.")
+            print(f"Warning: '{config_file}' not found. Using defaults.")
             return {}
 
     def get_config(self, key, default=None):
-        """Retrieve a configuration value for the current platform."""
         return self.config.get(key, default)
 
     def print_platform_info(self):
-        """Print basic platform info for debugging."""
         print("Platform Information:")
         print(f"  System: {self.system}")
         print(f"  Release: {self.release}")
         print(f"  Version: {self.version}")
         print(f"  Machine: {self.machine}")
         print(f"  Processor: {self.processor}")
-        print(f"  Home Directory: {self.home_dir}")
-        print(f"  Configurations: {self.config}")
+        print(f"  Home Dir: {self.home_dir}")
+        print(f"  Config: {self.config}")
 
 
-# =============================================================================
-# 2) Gemini - Dummy/Simulated Integration
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 2) Gemini (Simulated)
+# -----------------------------------------------------------------------------
 class Gemini:
     def __init__(self, api_key, platform_config):
         self.api_key = api_key
@@ -179,12 +158,11 @@ class Gemini:
         print("Gemini initialized with API key.")
 
     def generate_code(self, prompt, target_language="python", temperature=0.7, max_output_tokens=8000):
-        """Simulates code translation to target_language, returning a string."""
-        print(f"Simulating translation to {target_language} using Gemini...\n")
+        print(f"Simulating translation to {target_language} with Gemini...\n")
         system_label = self.platform_config.system
 
         if target_language == "python":
-            translated = (
+            result = (
                 "def main():\n"
                 "    # Translated code (Python)\n"
                 + "    " + "\n    ".join(prompt.splitlines()) +
@@ -193,7 +171,7 @@ class Gemini:
                 "    main()\n"
             )
         elif target_language == "javascript":
-            translated = (
+            result = (
                 "function main() {\n"
                 "    // Translated code (JavaScript)\n"
                 + "    " + "\n    ".join(prompt.splitlines()) +
@@ -202,7 +180,7 @@ class Gemini:
                 "main();\n"
             )
         elif target_language == "swift":
-            translated = (
+            result = (
                 "func main() {\n"
                 "    // Translated code (Swift)\n"
                 + "    " + "\n    ".join(prompt.splitlines()) +
@@ -210,40 +188,32 @@ class Gemini:
                 "}\nmain()\n"
             )
         else:
-            translated = f"// Translation to {target_language} not yet supported (Gemini simulation)"
+            result = f"// Not supported: {target_language}"
 
-        return translated
+        return result
 
     def analyze_suitability(self, source_code, package_name):
-        """Dummy simulation of analyzing source code's platform suitability."""
-        print("Simulating Gemini analysis for suitability...\n")
-
+        print("Simulating Gemini analysis...\n")
         if "network" in package_name.lower():
-            print(f"Warning: Package '{package_name}' seems related to networking.")
-            print("Recommendation: consider built-in networking libraries if possible.")
-            if input("Continue with installation anyway? (y/n): ").lower() != 'y':
+            print(f"Warning: '{package_name}' is networking. Consider built-in libs.")
+            if input("Continue anyway? (y/n): ").lower() != 'y':
                 return False
-
         if "system" in source_code:
-            print("Warning: Code might not be suitable for a sandboxed environment.")
-            if input("Continue with Python translation anyway? (y/n): ").lower() != 'y':
+            print("Warning: potential sandbox issues.")
+            if input("Continue with Python translation? (y/n): ").lower() != 'y':
                 return False
-
         return True
 
     def suggest_alternatives(self, package_name):
-        """Dummy suggestions if analysis fails."""
         if "network" in package_name.lower():
-            print("Consider Python's 'socket', 'requests', or iOS 'URLSession'.")
-        elif "gui" in package_name.lower():
-            print("Consider 'tkinter', 'PyQt', or SwiftUI on iOS.")
+            print("Try: 'requests' or 'socket' in Python, or iOS 'URLSession'.")
         else:
-            print("No specific alternatives suggested.")
+            print("No specific alternatives.")
 
 
-# =============================================================================
-# 3) AptAn - The Apt-Anywhere Manager + Methods
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 3) AptAn
+# -----------------------------------------------------------------------------
 class AptAn:
     def __init__(self, platform_config, gemini_api_key=None):
         self.platform_config = platform_config
@@ -254,34 +224,29 @@ class AptAn:
         os.makedirs(self.install_dir, exist_ok=True)
 
     def download_source(self, package_name, source_url):
-        """
-        Attempt to download the package source:
-          - If on Linux with apt-get, try `apt-get source`
-          - Otherwise, fallback to the provided URL (tar.gz)
-        """
         if source_url is None:
             source_url = ""
         try:
             if self.platform_config.system == "Linux" and shutil.which("apt-get"):
-                # Use apt-get source
-                download_cmd = ["apt-get", "source", package_name]
+                cmd = ["apt-get", "source", package_name]
                 temp_dir = os.path.join(self.source_dir, f"temp_{package_name}")
                 os.makedirs(temp_dir, exist_ok=True)
 
-                print(f"Downloading source for '{package_name}' via apt-get source...")
-                subprocess.run(download_cmd, cwd=temp_dir, check=True)
+                print(f"Downloading '{package_name}' via apt-get source...")
+                subprocess.run(cmd, cwd=temp_dir, check=True)
 
-                # Find extracted dir
-                extracted = [d for d in os.listdir(temp_dir) if os.path.isdir(os.path.join(temp_dir, d))]
+                extracted = [
+                    d for d in os.listdir(temp_dir)
+                    if os.path.isdir(os.path.join(temp_dir, d))
+                ]
                 if not extracted:
-                    raise FileNotFoundError(f"apt-get source did not produce any folder for '{package_name}'.")
+                    raise FileNotFoundError("apt-get source produced no folder.")
                 return os.path.join(temp_dir, extracted[0])
             else:
-                # Fallback to direct URL download
                 if not source_url:
-                    print("No source URL provided, cannot download.")
+                    print("No source URL provided.")
                     return None
-                print(f"Downloading source for '{package_name}' from URL: {source_url}")
+                print(f"Downloading '{package_name}' from URL: {source_url}")
                 response = requests.get(source_url, stream=True)
                 response.raise_for_status()
 
@@ -296,54 +261,49 @@ class AptAn:
                 return extract_dir
 
         except (requests.exceptions.RequestException, subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(f"Error downloading source: {e}")
+            print(f"Error: {e}")
             return None
 
     def convert_to_targz(self, source_path, package_name):
-        """Bundle the source into a .tar.gz file for uniform handling."""
         tar_file = os.path.join(self.source_dir, f"{package_name}.tar.gz")
-        print(f"Creating tar.gz package: {tar_file}...")
+        print(f"Creating tar.gz: {tar_file}")
         try:
             with tarfile.open(tar_file, "w:gz") as tar:
                 for root, dirs, files in os.walk(source_path):
                     for file in files:
-                        full_path = os.path.join(root, file)
-                        rel_path = os.path.relpath(full_path, source_path)
-                        tar.add(full_path, arcname=rel_path)
+                        fullp = os.path.join(root, file)
+                        relp = os.path.relpath(fullp, source_path)
+                        tar.add(fullp, arcname=relp)
             return tar_file
         except Exception as e:
-            print(f"Failed creating tar.gz: {e}")
+            print(f"Failed: {e}")
             return None
 
     def build_native(self, extract_dir, package_name):
-        """Attempt a naive 'make' build."""
         makefile = os.path.join(extract_dir, "Makefile")
         if not os.path.exists(makefile):
-            print(f"No Makefile found in {extract_dir}. Skipping native build.")
+            print(f"No Makefile in {extract_dir}. Skipping native build.")
             return False
         build_cmd = self.platform_config.get_config("build_command", "make")
-        build_cmd = f"cd {extract_dir} && {build_cmd}"
-        print(f"Running build command: {build_cmd}")
         try:
-            subprocess.run(build_cmd, shell=True, check=True)
-            print(f"Package '{package_name}' built successfully.")
+            subprocess.run(f"cd {extract_dir} && {build_cmd}", shell=True, check=True)
+            print(f"'{package_name}' built successfully (native).")
             return True
         except subprocess.CalledProcessError as e:
-            print(f"Native build failed: {e}")
+            print(f"Build error: {e}")
             return False
 
     def translate_to_language(self, extract_dir, package_name, target_language):
-        """Use Gemini to translate main.c -> <target_language> (dummy)."""
         if not self.gemini:
-            print("Gemini not configured; cannot translate.")
+            print("Gemini not configured.")
             return False
 
-        main_source = os.path.join(extract_dir, "main.c")
-        if not os.path.exists(main_source):
-            print(f"No 'main.c' found in {extract_dir}. Cannot translate.")
+        main_c = os.path.join(extract_dir, "main.c")
+        if not os.path.exists(main_c):
+            print("No main.c to translate.")
             return False
 
-        with open(main_source, "r") as f:
+        with open(main_c, "r") as f:
             source_code = f.read()
 
         translated = self.gemini.generate_code(source_code, target_language)
@@ -354,24 +314,24 @@ class AptAn:
         out_file = os.path.join(extract_dir, f"{package_name}.{target_language}")
         with open(out_file, "w") as f:
             f.write(translated)
-        print(f"Translated to '{target_language}' -> {out_file}")
+
+        print(f"Translated '{package_name}' -> {out_file} ({target_language})")
         return True
 
     def build_ios_app(self, extract_dir, package_name):
-        """Simulate building an iOS app with xcodebuild (macOS only)."""
         if self.platform_config.system != "Darwin":
-            print("iOS builds require macOS. Skipping.")
+            print("iOS build requires macOS.")
             return False
 
-        project_files = [f for f in os.listdir(extract_dir) if f.endswith(".xcodeproj")]
-        if not project_files:
-            # Create a minimal .xcodeproj if missing
-            xcodeproj_dir = os.path.join(extract_dir, f"{package_name}.xcodeproj")
-            os.makedirs(xcodeproj_dir, exist_ok=True)
-            with open(os.path.join(xcodeproj_dir, "project.pbxproj"), "w") as f:
-                f.write("// Minimal Xcode project structure")
+        proj_files = [f for f in os.listdir(extract_dir) if f.endswith(".xcodeproj")]
+        if not proj_files:
+            # Create minimal .xcodeproj
+            xcode_proj = os.path.join(extract_dir, f"{package_name}.xcodeproj")
+            os.makedirs(xcode_proj, exist_ok=True)
+            with open(os.path.join(xcode_proj, "project.pbxproj"), "w") as f:
+                f.write("// minimal xcodeproj")
 
-            # SwiftUI main file
+            # SwiftUI main
             main_swift = os.path.join(extract_dir, "main.swift")
             if not os.path.exists(main_swift):
                 with open(main_swift, "w") as f:
@@ -391,12 +351,11 @@ struct ContentView: View {{
     }}
 }}
 """)
-            project_files = [f"{package_name}.xcodeproj"]
+            proj_files = [f"{package_name}.xcodeproj"]
 
-        project_file = project_files[0]
         build_cmd = [
             "xcodebuild",
-            "-project", os.path.join(extract_dir, project_file),
+            "-project", os.path.join(extract_dir, proj_files[0]),
             "-scheme", package_name,
             "-configuration", "Release",
             "-destination", "generic/platform=iOS",
@@ -405,22 +364,17 @@ struct ContentView: View {{
         try:
             print(f"Running iOS build: {' '.join(build_cmd)}")
             subprocess.run(build_cmd, check=True)
-            print(f"iOS build for '{package_name}' succeeded.")
+            print(f"iOS app '{package_name}' built.")
             return True
         except subprocess.CalledProcessError as e:
             print(f"iOS build failed: {e}")
             return False
 
     def install_and_configure(self, extract_dir, package_name, install_env=None):
-        """
-        Copy the built/translated files to an install directory
-        and append PATH changes (Linux) or do environment-based installs.
-        """
         if install_env:
             install_path = os.path.join(self.install_dir, "envs", install_env)
             print(f"Installing '{package_name}' to environment: {install_path}")
         else:
-            # Default system-wide or local approach
             if self.platform_config.system == "Linux":
                 install_path = "/usr/local/lib"
             elif self.platform_config.system == "Windows":
@@ -438,31 +392,25 @@ struct ContentView: View {{
             else:
                 shutil.copy2(src, dst)
 
-        # Minimal config file
-        config_file = os.path.join(install_path, f"{package_name}_config.json")
+        conf_file = os.path.join(install_path, f"{package_name}_config.json")
         data = {
             "package_name": package_name,
             "install_time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "platform": self.platform_config.system
         }
-        with open(config_file, "w") as f:
+        with open(conf_file, "w") as f:
             json.dump(data, f, indent=4)
 
-        # PATH adjustments (Linux example)
         if self.platform_config.system == "Linux":
             bashrc = os.path.join(self.platform_config.home_dir, ".bashrc")
             with open(bashrc, "a") as brc:
                 brc.write(f"\n# AptAn for {package_name}\n")
                 brc.write(f"export PATH=\"{install_path}:$PATH\"\n")
-            print(f"Added {install_path} to PATH in {bashrc}. Source or restart shell to use it.")
+            print(f"PATH updated in '{bashrc}'.")
 
-        print(f"Install + config completed for '{package_name}'.")
+        print(f"Installation complete for '{package_name}'.")
 
     def install_package(self, package_name, source_url, target_platform, install_env=None):
-        """
-        Main entry: downloads, tars, extracts, builds or translates, 
-        and installs the package per the requested platform.
-        """
         src_dir = self.download_source(package_name, source_url)
         if not src_dir:
             return False
@@ -471,19 +419,18 @@ struct ContentView: View {{
         if not tarred:
             return False
 
-        # Re-extract to a fresh folder
         extracted = os.path.join(self.source_dir, package_name + "_extracted")
         if os.path.exists(extracted):
             shutil.rmtree(extracted)
         os.makedirs(extracted, exist_ok=True)
+
         try:
             with tarfile.open(tarred, "r:gz") as tar:
                 tar.extractall(extracted)
         except Exception as e:
-            print(f"Could not extract tar: {e}")
+            print(f"Extraction error: {e}")
             return False
 
-        # Analyze if main.c exists
         main_c = os.path.join(extracted, "main.c")
         if os.path.exists(main_c) and self.gemini:
             with open(main_c, "r") as f:
@@ -492,18 +439,17 @@ struct ContentView: View {{
                 self.gemini.suggest_alternatives(package_name)
                 return False
 
-        # Dispatch build/translate logic
+        # Decide how to build or translate
         if target_platform == "python" and self.gemini:
             with open(main_c, "r") as f:
                 code = f.read()
-            # Insert code into IPython if available
             ipy = get_ipython()
             if ipy:
-                translated = self.gemini.generate_code(code, "python")
-                ipy.set_next_input(translated, replace=False)
-                print("Inserted translated Python code into next IPython cell.")
+                py_code = self.gemini.generate_code(code, "python")
+                ipy.set_next_input(py_code, replace=False)
+                print("Inserted Python code into next cell.")
             else:
-                print("No IPython session found; skipping direct code insertion.")
+                print("No IPython session found.")
             return True
         elif target_platform == "native":
             if self.build_native(extracted, package_name):
@@ -512,8 +458,7 @@ struct ContentView: View {{
             return False
         elif target_platform == "ios":
             if self.build_ios_app(extracted, package_name):
-                print(f"iOS app for '{package_name}' built successfully.")
-                # Code signing or additional steps could go here
+                print(f"iOS app '{package_name}' built successfully.")
                 return True
             return False
         elif target_platform in ["javascript", "swift"]:
@@ -522,17 +467,16 @@ struct ContentView: View {{
                 return True
             return False
         else:
-            # Default or unknown => try building natively or do nothing
-            print(f"Unknown or unsupported target_platform '{target_platform}'. Doing a native build instead.")
+            print(f"Unknown target '{target_platform}'. Attempting native build.")
             if self.build_native(extracted, package_name):
                 self.install_and_configure(extracted, package_name, install_env)
                 return True
             return False
 
 
-# =============================================================================
-# 4) IPython Magic: AptAnMagics
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 4) IPython Magic (AptAnMagics)
+# -----------------------------------------------------------------------------
 if ipywidgets_available:
     @magics_class
     class AptAnMagics(Magics):
@@ -544,186 +488,171 @@ if ipywidgets_available:
             self.aptan_manager = AptAn(self.platform_config, self.gemini_api_key)
 
         @magic_arguments()
-        @argument("package_name", help="Name of the package to install.")
-        @argument("--source-url", help="URL to download the source (if not using apt).")
+        @argument("package_name", help="Package to install.")
+        @argument("--source-url", help="URL if not using apt-get.")
         @argument("--target", default="native", help="Target platform: native, python, ios, etc.")
-        @argument("--install-env", help="Environment (e.g., 'local' or venv name).")
+        @argument("--install-env", help="Environment (like 'local' or venv).")
         @line_magic
         def aptan(self, line):
             """
-            %aptan install <package_name> --source-url <url> --target <native|python|ios|...>
+            Example:
+              %aptan install <package_name> [--source-url <url>] [--target <...>] [--install-env <...>]
             """
             args = parse_argstring(self.aptan, line)
-
-            # Very simple approach: 
             if args.package_name == "install":
-                package_name = args.source_url
-                source_url = args.target if args.target != "native" else ""
-                t_platform = args.install_env if args.install_env else "native"
-                self.aptan_manager.install_package(package_name, source_url, t_platform)
+                pkg = args.source_url
+                src_url = args.target if args.target != "native" else ""
+                tplat = args.install_env if args.install_env else "native"
+                self.aptan_manager.install_package(pkg, src_url, tplat)
             else:
-                # Or interpret them directly
-                package_name = args.package_name
-                source_url = args.source_url
-                t_platform = args.target
+                pkg = args.package_name
+                src_url = args.source_url
+                tplat = args.target
                 ienv = args.install_env
-
-                self.aptan_manager.install_package(package_name, source_url, t_platform, ienv)
+                self.aptan_manager.install_package(pkg, src_url, tplat, ienv)
 
         @line_magic
         def apt(self, line):
             """
-            %apt <args...> => pass to system apt
+            Forward to `apt ...`
             """
-            command = f"apt {line}"
-            print(f"Executing: {command}")
+            cmd = f"apt {line}"
+            print(f"Executing: {cmd}")
             try:
-                subprocess.run(command, shell=True, check=True, executable=self.platform_config.get_config("shell"))
+                subprocess.run(
+                    cmd,
+                    shell=True,
+                    check=True,
+                    executable=self.platform_config.get_config("shell")
+                )
             except subprocess.CalledProcessError as e:
-                print(f"Command failed: {e}")
+                print(f"Error: {e}")
 
 
-# =============================================================================
+# -----------------------------------------------------------------------------
 # 5) Jedimt Core
-# =============================================================================
+# -----------------------------------------------------------------------------
 class Jedimt:
-    """Core class for compile, run, apt commands, etc."""
     def __init__(self, mode="compile", gemini_api_key=None):
         self.mode = mode
         self.platform_config = PlatformConfig()
-        console.log(f"[blue]Detected user platform: {self.platform_config.system}[/blue]")
+        console.log(f"[blue]Detected platform: {self.platform_config.system}[/blue]")
         self.gemini_api_key = gemini_api_key
         self.aptan_manager = AptAn(self.platform_config, gemini_api_key)
         self.scripts = {}
 
     def compile_code(self, code_snippet, script_id):
-        """Simulated code compilation."""
-        executable = f"compiled_code_for_{script_id}"
-        self.scripts[script_id] = {"source": code_snippet, "executable": executable}
+        exe = f"compiled_code_for_{script_id}"
+        self.scripts[script_id] = {"source": code_snippet, "executable": exe}
         console.log(f"[green]Script '{script_id}' compiled successfully.[/green]")
-        return {"script_id": script_id, "executable": executable}
+        return {"script_id": script_id, "executable": exe}
 
     def run_script(self, script_id):
-        """Simulated script run (just prints code)."""
         if script_id not in self.scripts:
-            console.log(f"[red]Script '{script_id}' not found.[/red]")
+            console.log(f"[red]No such script '{script_id}'[/red]")
             return
-        console.log(f"[blue]Executing script '{script_id}'...[/blue]")
-        source = self.scripts[script_id]["source"]
-        console.print(Panel(source, title="Script Output"))
+        console.log(f"[blue]Running script '{script_id}'...[/blue]")
+        src = self.scripts[script_id]["source"]
+        console.print(Panel(src, title="Script Output"))
 
     def apt_install(self, package_name, target_platform=None):
-        """Install a package with AptAn."""
         success = self.aptan_manager.install_package(package_name, None, target_platform)
         if success:
-            console.log(f"[green]APT package '{package_name}' installed successfully for platform '{target_platform}'.[/green]")
+            console.log(f"[green]APT package '{package_name}' installed for '{target_platform}'.[/green]")
         else:
-            console.log(f"[red]Failed to install APT package '{package_name}'.[/red]")
+            console.log(f"[red]Failed to install '{package_name}'.[/red]")
 
     def shell_command(self, args):
-        """
-        The main pass-through command entry:
-            cd, apt, compile, run, or fallback to system shell.
-        """
         if not args:
             self.print_usage()
             return
         cmd = args[0]
         subargs = args[1:]
 
-        # Dispatch
         if cmd == "cd":
             if not subargs:
-                console.log("[red]Usage: cd <directory>[/red]")
+                console.log("[red]Usage: cd <dir>[/red]")
                 return
             try:
                 os.chdir(subargs[0])
-                console.log(f"[green]Changed directory to: {os.getcwd()}[/green]")
+                console.log(f"[green]Changed dir to {os.getcwd()}[/green]")
             except Exception as e:
-                console.log(f"[red]Error changing directory: {e}[/red]")
+                console.log(f"[red]Error: {e}[/red]")
 
         elif cmd == "apt":
-            # e.g. apt install <package> --target <...>
             if not subargs:
-                console.log("[red]Usage: apt install <package_name> [--target ...][/red]")
+                console.log("[red]Usage: apt install <pkg> [--target ...][/red]")
                 return
             subcmd = subargs[0]
             if subcmd == "install":
                 if len(subargs) < 2:
-                    console.log("[red]Usage: apt install <package_name> [--target <...>][/red]")
+                    console.log("[red]Usage: apt install <pkg> [--target ...][/red]")
                     return
-                package_name = subargs[1]
-                # If next is --target, parse that
-                target_plat = None
+                pkg_name = subargs[1]
+                tplat = None
                 if "--target" in subargs:
                     idx = subargs.index("--target")
-                    if idx + 1 < len(subargs):
-                        target_plat = subargs[idx + 1]
-                self.apt_install(package_name, target_plat)
+                    if idx+1 < len(subargs):
+                        tplat = subargs[idx+1]
+                self.apt_install(pkg_name, tplat)
             else:
-                console.log(f"[red]Unknown apt subcommand '{subcmd}'.[/red]")
+                console.log(f"[red]Unknown subcmd: apt {subcmd}[/red]")
 
         elif cmd == "compile":
-            # compile <script_id> <source_code...>
             if len(subargs) < 2:
-                console.log("[red]Usage: compile <script_id> <source_code>[/red]")
+                console.log("[red]Usage: compile <script_id> <source>[/red]")
                 return
-            script_id = subargs[0]
+            sid = subargs[0]
             code = " ".join(subargs[1:])
-            self.compile_code(code, script_id)
+            self.compile_code(code, sid)
 
         elif cmd == "run":
-            # run <script_id>
             if len(subargs) < 1:
                 console.log("[red]Usage: run <script_id>[/red]")
                 return
-            script_id = subargs[0]
-            self.run_script(script_id)
+            sid = subargs[0]
+            self.run_script(sid)
+
         else:
-            # Fallback - system shell
+            # Fallback to system shell
             full_cmd = " ".join(args)
-            console.log(f"[blue]Executing system command: {full_cmd}[/blue]")
+            console.log(f"[blue]System command: {full_cmd}[/blue]")
             try:
                 subprocess.run(full_cmd, shell=True, check=True)
             except subprocess.CalledProcessError as e:
-                console.log(f"[red]Command failed: {e}[/red]")
+                console.log(f"[red]Command error: {e}[/red]")
 
     def print_usage(self):
-        usage = f"""
-Usage: {sys.argv[0]} <command> [arguments ...]
-Supported Commands:
-  cd <directory>               Change directory.
-  apt install <package_name>   Install an apt package.
-  compile <script_id> <code>   Compile code snippet.
-  run <script_id>              Run compiled snippet.
-  <other>                      Passed to system shell.
-"""
-        console.print(Panel(usage, title="Jedimt CLI Usage"))
+        console.print(Panel(
+            f"Usage: {sys.argv[0]} <command> [args]\n"
+            "Commands:\n"
+            "  cd <directory>\n"
+            "  apt install <package> [--target ...]\n"
+            "  compile <script_id> <code>\n"
+            "  run <script_id>\n"
+            "Else pass to system shell.",
+            title="Jedimt CLI Usage"
+        ))
 
 
-# =============================================================================
-# 6) Optional Kivy GUI: InterfaceMapper & InterfaceMapperApp
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 6) Optional Kivy GUI
+# -----------------------------------------------------------------------------
 if kivy_available:
     class InterfaceMapper(BoxLayout):
         def __init__(self, **kwargs):
             super().__init__(orientation="vertical", **kwargs)
             self.platform_config = PlatformConfig()
             self.gemini = Gemini("dummy_api_key", self.platform_config)
-
-            # UI: code input
             self.code_input = TextInput(
-                text="Enter interface specification or UI code here...",
+                text="Enter interface specification here...",
                 size_hint=(1, 0.4)
             )
             self.add_widget(self.code_input)
-
-            # Map button
             self.map_button = Button(text="Map Interface", size_hint=(1, 0.1))
             self.map_button.bind(on_press=self.map_interface)
             self.add_widget(self.map_button)
 
-            # Output area
             self.output_scroll = ScrollView(size_hint=(1, 0.5))
             self.output_layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
             self.output_layout.bind(minimum_height=self.output_layout.setter("height"))
@@ -731,22 +660,22 @@ if kivy_available:
             self.add_widget(self.output_scroll)
 
         def map_interface(self, instance):
-            input_code = self.code_input.text.strip()
-            if not input_code:
-                self.show_popup("Error", "Please enter some interface code.")
+            text = self.code_input.text.strip()
+            if not text:
+                self.show_popup("Error", "No interface code.")
                 return
-            prompt = f"Translate the following interface specification into a mobile-specific layout:\n\n{input_code}"
-            mapped_code = self.gemini.generate_code(prompt, target_language="swift")
+            prompt = "Translate to a mobile layout:\n\n" + text
+            mapped = self.gemini.generate_code(prompt, "swift")
             self.output_layout.clear_widgets()
-            output_label = Label(text=mapped_code, markup=True, size_hint_y=None, height=600)
-            self.output_layout.add_widget(output_label)
+            lbl = Label(text=mapped, markup=True, size_hint_y=None, height=600)
+            self.output_layout.add_widget(lbl)
 
-        def show_popup(self, title, message):
+        def show_popup(self, title, msg):
             popup = Popup(
                 title=title,
-                content=Label(text=message),
+                content=Label(text=msg),
                 size_hint=(None, None),
-                size=(400, 200)
+                size=(400,200)
             )
             popup.open()
 
@@ -755,216 +684,471 @@ if kivy_available:
             return InterfaceMapper()
 
 
-# =============================================================================
-# 7) ipywidgets-based Interface (JedimtYescoInterface)
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 7) Enhanced ipywidgets-based Interface (JedimtYescoInterface)
+# -----------------------------------------------------------------------------
 if ipywidgets_available:
     class JedimtYescoInterface:
         """
-        Provides a Tabbed UI in a Jupyter notebook, hooking into Jedimt methods.
+        Enhanced ipywidgets interface with improved output handling, logging,
+        state management, and UX improvements.
         """
         def __init__(self, jedimt_instance=None, gemini_api_key=None):
             self.jedimt = jedimt_instance or Jedimt(mode="compile", gemini_api_key=gemini_api_key)
+            self.state = {
+                'current_project': None,
+                'last_compile_result': None,
+                'compile_history': [],
+                'package_history': [],
+                'logs': []
+            }
+            self.setup_logging()
             self.setup_widgets()
 
+        # --------------------------
+        # Logging + Output
+        # --------------------------
+        def setup_logging(self):
+            self.log_output = widgets.Output()
+
+        def log(self, message, level="INFO"):
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            entry = f"[{timestamp}] {level}: {message}"
+            self.state['logs'].append(entry)
+            with self.log_output:
+                if level == "ERROR":
+                    print(f"\033[91m{entry}\033[0m")
+                elif level == "WARNING":
+                    print(f"\033[93m{entry}\033[0m")
+                else:
+                    print(entry)
+
+        # --------------------------
+        # Main Widgets + Layout
+        # --------------------------
         def setup_widgets(self):
-            # Main tab
+            self.status_bar = widgets.HTML(
+                value='<div style="padding: 5px; background-color: #f0f0f0;">Ready</div>'
+            )
+
             self.tab = widgets.Tab()
+            self.progress = widgets.FloatProgress(
+                value=0, min=0, max=100, description='Progress:',
+                style={'bar_color': '#1a75ff'},
+                layout={'width': '50%'}
+            )
 
             # Tab pages
             self.package_tab = self.create_package_tab()
             self.compiler_tab = self.create_compiler_tab()
             self.project_tab = self.create_project_tab()
             self.simulator_tab = self.create_simulator_tab()
+            self.logs_tab = self.create_logs_tab()
 
             self.tab.children = [
-                self.package_tab, self.compiler_tab,
-                self.project_tab, self.simulator_tab
+                self.package_tab,
+                self.compiler_tab,
+                self.project_tab,
+                self.simulator_tab,
+                self.logs_tab
             ]
-
-            titles = ["Package Manager", "Compiler", "Project Tools", "iOS Simulator"]
+            titles = ["Package Manager", "Compiler", "Project Tools", "iOS Simulator", "Logs"]
             for i, t in enumerate(titles):
                 self.tab.set_title(i, t)
 
-            # Output area
             self.output = widgets.Output()
 
-            self.main_layout = widgets.VBox([
-                self.tab,
-                widgets.HTML("<hr>"),
-                widgets.HTML("<h3>Output:</h3>"),
-                self.output
-            ])
+            clear_btn = widgets.Button(
+                description='Clear Output',
+                button_style='warning',
+                layout={'width': 'auto'}
+            )
+            clear_btn.on_click(self.clear_output)
 
-        # ---------------------
-        # Create Individual Tabs
-        # ---------------------
+            self.main_layout = widgets.VBox([
+                self.status_bar,
+                self.tab,
+                widgets.HBox([self.progress, clear_btn]),
+                widgets.HTML("<h3>Output:</h3>"),
+                self.output,
+                widgets.HTML("<h3>Logs:</h3>"),
+                self.log_output
+            ], layout=widgets.Layout(padding='10px'))
+
+        # --------------------------
+        # Tabs
+        # --------------------------
         def create_package_tab(self):
             self.package_name = widgets.Text(
-                description="Package:",
-                placeholder="Enter package name"
+                description="Package:", placeholder="Enter package name",
+                layout={'width': '50%'}
             )
             self.target_platform = widgets.Dropdown(
                 description="Target:",
                 options=["native", "ipywidgets", "python", "ios"],
-                value="native"
+                value="native",
+                layout={'width': '50%'}
             )
-            install_btn = widgets.Button(description="Install Package")
+            self.package_history_dropdown = widgets.Dropdown(
+                description="History:", options=[], layout={'width': '50%'}
+            )
+            install_btn = widgets.Button(
+                description="Install Package", button_style='info', icon='check'
+            )
             install_btn.on_click(self.handle_install)
 
             return widgets.VBox([
-                self.package_name, self.target_platform, install_btn
-            ])
+                widgets.HBox([self.package_name, self.target_platform]),
+                self.package_history_dropdown,
+                install_btn
+            ], layout=widgets.Layout(padding='10px'))
 
         def create_compiler_tab(self):
             self.script_id = widgets.Text(
-                description="Script ID:",
-                placeholder="Enter script identifier"
+                description="Script ID:", placeholder="Enter script identifier",
+                layout={'width': '50%'}
             )
             self.code_area = widgets.Textarea(
                 placeholder="Enter your code here...",
-                layout={"width": "100%", "height": "200px"},
+                layout={'width': '100%', 'height': '300px'},
             )
-            compile_btn = widgets.Button(description="Compile")
-            run_btn = widgets.Button(description="Run")
+            self.optimization_level = widgets.Dropdown(
+                description="Optimization:",
+                options=['O0', 'O1', 'O2', 'O3'],
+                value='O2',
+                layout={'width': '30%'}
+            )
+            compile_btn = widgets.Button(description="Compile", button_style='primary', icon='cog')
+            run_btn = widgets.Button(description="Run", button_style='success', icon='play')
 
             compile_btn.on_click(self.handle_compile)
             run_btn.on_click(self.handle_run)
+
             return widgets.VBox([
-                self.script_id, self.code_area,
+                self.script_id,
+                self.optimization_level,
+                self.code_area,
                 widgets.HBox([compile_btn, run_btn])
-            ])
+            ], layout=widgets.Layout(padding='10px'))
 
         def create_project_tab(self):
             self.project_name = widgets.Text(
                 description="Project:",
-                placeholder="Enter project name"
+                placeholder="Enter project name",
+                layout={'width': '50%'}
             )
             self.identity = widgets.Text(
                 description="Identity:",
-                placeholder="Enter signing identity"
+                placeholder="Enter signing identity",
+                layout={'width': '50%'}
             )
             self.language = widgets.Dropdown(
                 description="Language:",
                 options=["swift", "objc", "rust"],
-                value="swift"
+                value="swift",
+                layout={'width': '30%'}
             )
 
-            create_btn = widgets.Button(description="Create Project")
-            sign_btn = widgets.Button(description="Sign Project")
-            setup_btn = widgets.Button(description="Setup Project")
+            # Accordion for extra settings
+            self.settings_accordion = widgets.Accordion([
+                widgets.VBox([
+                    widgets.Checkbox(description='Enable debugging', value=True),
+                    widgets.Checkbox(description='Generate documentation', value=True),
+                    widgets.Text(description='Version:', value='1.0.0')
+                ])
+            ])
+            self.settings_accordion.set_title(0, 'Project Settings')
+
+            create_btn = widgets.Button(description="Create Project", button_style='primary', icon='plus')
+            sign_btn = widgets.Button(description="Sign Project", button_style='warning', icon='pencil')
+            setup_btn = widgets.Button(description="Setup Project", button_style='info', icon='gear')
 
             create_btn.on_click(self.handle_create_project)
             sign_btn.on_click(self.handle_sign_project)
             setup_btn.on_click(self.handle_setup)
 
             return widgets.VBox([
-                self.project_name,
-                self.identity,
+                widgets.HBox([self.project_name, self.identity]),
                 self.language,
+                self.settings_accordion,
                 widgets.HBox([create_btn, sign_btn, setup_btn])
-            ])
+            ], layout=widgets.Layout(padding='10px'))
 
         def create_simulator_tab(self):
             self.sim_project = widgets.Text(
-                description="Project:",
-                placeholder="Enter project name"
+                description="Project:", placeholder="Enter project name",
+                layout={'width': '50%'}
             )
-            launch_btn = widgets.Button(description='Launch Simulator')
-            debug_btn = widgets.Button(description='Debug')
+            self.device_selector = widgets.Dropdown(
+                description="Device:",
+                options=['iPhone 14 Pro', 'iPhone 14', 'iPhone SE', 'iPad Pro 12.9"', 'iPad Air'],
+                value='iPhone 14 Pro',
+                layout={'width': '50%'}
+            )
+            self.orientation = widgets.ToggleButtons(
+                options=['Portrait', 'Landscape'],
+                value='Portrait',
+                layout={'width': 'auto'}
+            )
+            launch_btn = widgets.Button(description='Launch Simulator', button_style='success', icon='play')
+            debug_btn = widgets.Button(description='Debug', button_style='warning', icon='bug')
 
             launch_btn.on_click(self.handle_simulator)
             debug_btn.on_click(self.handle_debug)
 
             return widgets.VBox([
                 self.sim_project,
+                widgets.HBox([self.device_selector, self.orientation]),
                 widgets.HBox([launch_btn, debug_btn])
-            ])
+            ], layout=widgets.Layout(padding='10px'))
 
-        # ---------------------
-        # Handlers
-        # ---------------------
-        def handle_install(self, btn):
+        def create_logs_tab(self):
+            self.log_filter = widgets.Dropdown(
+                description="Level:",
+                options=['ALL', 'INFO', 'WARNING', 'ERROR'],
+                value='ALL',
+                layout={'width': '30%'}
+            )
+            self.log_filter.observe(self.filter_logs, names='value')
+            clear_logs_btn = widgets.Button(description='Clear Logs', button_style='danger', icon='trash')
+            clear_logs_btn.on_click(self.clear_logs)
+            export_logs_btn = widgets.Button(description='Export Logs', button_style='info', icon='download')
+            export_logs_btn.on_click(self.export_logs)
+
+            return widgets.VBox([
+                widgets.HBox([self.log_filter, clear_logs_btn, export_logs_btn]),
+                self.log_output
+            ], layout=widgets.Layout(padding='10px'))
+
+        # --------------------------
+        # Helper Methods
+        # --------------------------
+        def update_status(self, msg, color='black'):
+            self.status_bar.value = f'<div style="padding: 5px; background-color: #f0f0f0; color: {color};">{msg}</div>'
+
+        def update_progress(self, value):
+            self.progress.value = value
+
+        def clear_output(self, _btn=None):
             with self.output:
                 clear_output()
-                pkg = self.package_name.value
-                tgt = self.target_platform.value
-                print(f"Installing package '{pkg}' for target '{tgt}'...")
-                self.jedimt.apt_install(pkg, tgt)
 
-        def handle_compile(self, btn):
+        def clear_logs(self, _btn=None):
+            self.state['logs'] = []
+            with self.log_output:
+                clear_output()
+
+        def export_logs(self, _btn=None):
+            stamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"jedimt_logs_{stamp}.txt"
+            with open(filename, 'w') as f:
+                f.write('\n'.join(self.state['logs']))
+            self.log(f"Logs exported to {filename}", "INFO")
+
+        def filter_logs(self, change):
+            level = change['new']
+            with self.log_output:
+                clear_output()
+                for log_line in self.state['logs']:
+                    if level == 'ALL' or f"{level}:" in log_line:
+                        print(log_line)
+
+        # --------------------------
+        # Event Handlers
+        # --------------------------
+        def handle_install(self, _btn):
+            self.update_status("Installing package...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                sid = self.script_id.value
-                code = self.code_area.value
-                print(f"Compiling script '{sid}'...")
-                self.jedimt.compile_code(code, sid)
+                try:
+                    pkg = self.package_name.value
+                    tgt = self.target_platform.value
+                    if not pkg:
+                        raise ValueError("Package name is required")
+                    self.log(f"Starting installation of '{pkg}' for '{tgt}'")
+                    self.update_progress(30)
 
-        def handle_run(self, btn):
+                    if pkg not in self.state['package_history']:
+                        self.state['package_history'].append(pkg)
+                        self.package_history_dropdown.options = self.state['package_history']
+
+                    self.update_progress(60)
+                    self.jedimt.apt_install(pkg, tgt)
+                    self.update_progress(100)
+
+                    self.log(f"Installed '{pkg}' successfully")
+                    self.update_status("Installation complete", "green")
+                except Exception as e:
+                    self.log(f"Installation failed: {e}", "ERROR")
+                    self.update_status("Installation failed", "red")
+                finally:
+                    self.update_progress(0)
+
+        def handle_compile(self, _btn):
+            self.update_status("Compiling script...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                sid = self.script_id.value
-                print(f"Running script '{sid}'...")
-                self.jedimt.run_script(sid)
+                try:
+                    sid = self.script_id.value
+                    code = self.code_area.value
+                    if not sid or not code.strip():
+                        raise ValueError("Script ID and code required.")
+                    self.log(f"Compiling '{sid}' with optimization {self.optimization_level.value}")
+                    self.update_progress(50)
+                    result = self.jedimt.compile_code(code, sid)
+                    self.state['last_compile_result'] = result
+                    self.state['compile_history'].append(result)
+                    print(f"Script '{sid}' compiled.")
+                    self.log(f"Compile success: {result}")
+                    self.update_status("Compilation complete", "green")
+                except Exception as e:
+                    self.log(f"Compile error: {e}", "ERROR")
+                    self.update_status("Compile failed", "red")
+                finally:
+                    self.update_progress(0)
 
-        def handle_create_project(self, btn):
+        def handle_run(self, _btn):
+            self.update_status("Running script...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                project = self.project_name.value
-                print(f"Creating project '{project}'...")
-                if not os.path.exists(project):
-                    os.makedirs(project)
-                    print(f"Project '{project}' created successfully.")
-                else:
-                    print(f"Project '{project}' already exists.")
+                try:
+                    sid = self.script_id.value
+                    if not sid:
+                        raise ValueError("Script ID required to run.")
+                    self.update_progress(50)
+                    self.jedimt.run_script(sid)
+                    self.update_progress(100)
+                    self.update_status("Script run complete", "green")
+                except Exception as e:
+                    self.log(f"Run error: {e}", "ERROR")
+                    self.update_status("Run failed", "red")
+                finally:
+                    self.update_progress(0)
 
-        def handle_sign_project(self, btn):
+        def handle_create_project(self, _btn):
+            self.update_status("Creating project...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                project = self.project_name.value
-                identity = self.identity.value
-                print(f"Signing project '{project}' with identity '{identity}'...")
-                app_path = os.path.join(project, "build")
-                if os.path.exists(app_path):
-                    try:
-                        subprocess.run(f"codesign -s {identity} {app_path}", shell=True, check=True)
-                        print("Application signed successfully.")
-                    except subprocess.CalledProcessError as e:
-                        print(f"Signing failed: {e}")
-                else:
-                    print(f"Application path '{app_path}' does not exist.")
+                try:
+                    proj = self.project_name.value
+                    if not proj:
+                        raise ValueError("Project name is required.")
+                    self.log(f"Creating project '{proj}'")
+                    self.update_progress(40)
+                    if not os.path.exists(proj):
+                        os.makedirs(proj)
+                        print(f"Project '{proj}' created.")
+                    else:
+                        print(f"Project '{proj}' already exists.")
+                    self.update_progress(100)
+                    self.update_status("Project creation complete", "green")
+                except Exception as e:
+                    self.log(f"Create project error: {e}", "ERROR")
+                    self.update_status("Project creation failed", "red")
+                finally:
+                    self.update_progress(0)
 
-        def handle_setup(self, btn):
+        def handle_sign_project(self, _btn):
+            self.update_status("Signing project...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                print("Setting up project environment...")
-                # Insert any real setup logic here.
-                print("Setup complete.")
+                try:
+                    proj = self.project_name.value
+                    ident = self.identity.value
+                    if not proj or not ident:
+                        raise ValueError("Project name and identity required.")
+                    app_path = os.path.join(proj, "build")
+                    self.update_progress(40)
+                    if os.path.exists(app_path):
+                        cmd = f"codesign -s {ident} {app_path}"
+                        subprocess.run(cmd, shell=True, check=True)
+                        print("App signed successfully.")
+                        self.log(f"Signed '{proj}' with identity '{ident}'")
+                        self.update_progress(100)
+                        self.update_status("Signing complete", "green")
+                    else:
+                        raise FileNotFoundError(f"Path '{app_path}' doesn't exist.")
+                except Exception as e:
+                    self.log(f"Sign error: {e}", "ERROR")
+                    self.update_status("Signing failed", "red")
+                finally:
+                    self.update_progress(0)
 
-        def handle_simulator(self, btn):
+        def handle_setup(self, _btn):
+            self.update_status("Setting up project...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                project = self.sim_project.value
-                print(f"Launching simulator for project '{project}'...")
-                # Insert real simulator logic here
-                print("Simulator launched.")
+                try:
+                    self.log("Performing project setup tasks.")
+                    time.sleep(1)  # simulate
+                    print("Setup complete.")
+                    self.update_progress(100)
+                    self.update_status("Setup complete", "green")
+                except Exception as e:
+                    self.log(f"Setup error: {e}", "ERROR")
+                    self.update_status("Setup failed", "red")
+                finally:
+                    self.update_progress(0)
 
-        def handle_debug(self, btn):
+        def handle_simulator(self, _btn):
+            self.update_status("Launching simulator...", "blue")
+            self.update_progress(0)
             with self.output:
                 clear_output()
-                project = self.sim_project.value
-                lang = self.language.value
-                print(f"Debugging '{project}' ({lang})...")
-                # Insert real debug logic here
-                print("Debug session started.")
+                try:
+                    proj = self.sim_project.value
+                    dev = self.device_selector.value
+                    orient = self.orientation.value
+                    if not proj:
+                        raise ValueError("Project name required.")
+                    self.log(f"Launch simulator for '{proj}' on device '{dev}' ({orient})")
+                    time.sleep(1)  # simulate
+                    print(f"Simulator launched for '{proj}' with device '{dev}'. Orientation: {orient}")
+                    self.update_progress(100)
+                    self.update_status("Simulator running", "green")
+                except Exception as e:
+                    self.log(f"Simulator error: {e}", "ERROR")
+                    self.update_status("Simulator failed", "red")
+                finally:
+                    self.update_progress(0)
 
+        def handle_debug(self, _btn):
+            self.update_status("Debugging...", "blue")
+            self.update_progress(0)
+            with self.output:
+                clear_output()
+                try:
+                    proj = self.sim_project.value
+                    lang = self.language.value
+                    if not proj:
+                        raise ValueError("Project name required.")
+                    self.log(f"Debugging '{proj}' in {lang}")
+                    time.sleep(1)  # simulate
+                    print(f"Debug session started for '{proj}' ({lang}).")
+                    self.update_progress(100)
+                    self.update_status("Debug session active", "green")
+                except Exception as e:
+                    self.log(f"Debug error: {e}", "ERROR")
+                    self.update_status("Debug failed", "red")
+                finally:
+                    self.update_progress(0)
+
+        # --------------------------
+        # Display
+        # --------------------------
         def display(self):
             display(self.main_layout)
 
 
-# =============================================================================
-# 8) Yesco CLI Commands
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 8) Yesco CLI
+# -----------------------------------------------------------------------------
 @click.group()
 def yesco():
     """Yesco: Manage projects and build applications."""
@@ -973,10 +1157,9 @@ def yesco():
 @yesco.command()
 @click.argument("project_name")
 def create_project(project_name):
-    """Create a new project directory."""
     if not os.path.exists(project_name):
         os.makedirs(project_name)
-        console.log(f"[green]Project '{project_name}' created successfully.[/green]")
+        console.log(f"[green]Project '{project_name}' created.[/green]")
     else:
         console.log(f"[red]Project '{project_name}' already exists.[/red]")
 
@@ -984,51 +1167,45 @@ def create_project(project_name):
 @click.argument("project_name")
 @click.argument("identity")
 def sign_project(project_name, identity):
-    """Sign the application project."""
     app_path = os.path.join(project_name, "build")
     if os.path.exists(app_path):
-        console.log(f"[blue]Signing application at '{app_path}' with identity '{identity}'...[/blue]")
+        console.log(f"[blue]Signing '{app_path}' with identity '{identity}'...[/blue]")
         try:
             subprocess.run(f"codesign -s {identity} {app_path}", shell=True, check=True)
-            console.log("[green]Application signed successfully.[/green]")
+            console.log("[green]App signed successfully.[/green]")
         except subprocess.CalledProcessError as e:
             console.log(f"[red]Signing failed: {e}[/red]")
     else:
-        console.log(f"[red]Application path '{app_path}' does not exist.[/red]")
+        console.log(f"[red]Path '{app_path}' does not exist.[/red]")
 
 @yesco.command()
 @click.argument("source_file")
 @click.argument("output_file")
-@click.option("--language", prompt="Language (swift/objc/rust)", help="Specify the language of the source file.")
+@click.option("--language", prompt="Language (swift/objc/rust)", help="Language of the source file.")
 def compile_source(source_file, output_file, language):
-    """Compile Swift, Objective-C, or Rust source file."""
-    cmd = None
     lang_lower = language.lower()
     if lang_lower == "swift":
-        console.log(f"[blue]Compiling Swift source: {source_file}...[/blue]")
         cmd = f"swiftc {source_file} -o {output_file}"
     elif lang_lower == "objc":
-        console.log(f"[blue]Compiling Objective-C source: {source_file}...[/blue]")
         cmd = f"clang -framework Foundation {source_file} -o {output_file}"
     elif lang_lower == "rust":
-        console.log(f"[blue]Compiling Rust source: {source_file}...[/blue]")
         cmd = f"rustc {source_file} -o {output_file}"
     else:
-        console.log(f"[red]Unsupported language: {language}. Use 'swift', 'objc', or 'rust'.[/red]")
+        console.log(f"[red]Unsupported language: {language}.[/red]")
         return
 
-    result = subprocess.run(cmd, shell=True, capture_output=True)
-    if result.returncode == 0:
+    console.log(f"[blue]Compiling {language} source: {source_file}[/blue]")
+    res = subprocess.run(cmd, shell=True, capture_output=True)
+    if res.returncode == 0:
         console.log(f"[green]{language.title()} compilation successful: {output_file}.[/green]")
     else:
-        console.log(f"[red]{language.title()} compilation failed: {result.stderr.decode()}[/red]")
+        console.log(f"[red]{language.title()} failed: {res.stderr.decode()}[/red]")
 
 @yesco.command()
 @click.argument("app_path")
 @click.argument("output_dir")
 def package(app_path, output_dir):
-    """Package the application."""
-    console.log(f"[blue]Packaging application from {app_path}...[/blue]")
+    console.log(f"[blue]Packaging '{app_path}'...[/blue]")
     cmd = (
         f"pkgbuild --root {app_path} "
         f"--identifier com.example.myapp --version 1.0 "
@@ -1036,25 +1213,24 @@ def package(app_path, output_dir):
     )
     result = subprocess.run(cmd, shell=True, capture_output=True)
     if result.returncode == 0:
-        console.log(f"[green]Application packaged successfully: {output_dir}/myapp.pkg.[/green]")
+        console.log(f"[green]Packaged -> {output_dir}/myapp.pkg[/green]")
     else:
         console.log(f"[red]Packaging failed: {result.stderr.decode()}[/red]")
 
 @yesco.command()
 @click.option('--retry', is_flag=True, help="Retry setup if any step fails.")
 def setup(retry):
-    """Automate system setup and configuration."""
     def automate_setup():
         console.log("[blue]Automating setup...[/blue]")
-        # Real logic would go here
-        console.log("[green]Setup automation complete.[/green]")
+        # Real logic
+        console.log("[green]Setup complete.[/green]")
 
     while True:
         try:
             automate_setup()
             break
         except Exception as e:
-            console.log(f"[red]Error during setup: {e}[/red]")
+            console.log(f"[red]Error: {e}[/red]")
             if not retry or Prompt.ask("Retry or Exit?", choices=["Retry", "Exit"]).lower() == "exit":
                 sys.exit(1)
             else:
@@ -1063,24 +1239,25 @@ def setup(retry):
 @yesco.command()
 @click.argument("project_name")
 def run_simulator(project_name):
-    """Run the iOS simulator for the given project."""
     if not os.path.exists(project_name):
-        console.log(f"[red]Project folder '{project_name}' does not exist.[/red]")
+        console.log(f"[red]Folder '{project_name}' not found.[/red]")
+        return
+    src_folder = os.path.join(project_name, "src")
+    if not os.path.isdir(src_folder):
+        console.log(f"[red]No 'src' folder in '{project_name}'.[/red]")
         return
 
-    src_folder = os.path.join(project_name, "src")
     js_files = [os.path.join(src_folder, f) for f in os.listdir(src_folder) if f.endswith(".js")]
     js_code = ""
-    for jsf in js_files:
-        with open(jsf, "r") as f:
+    for jf in js_files:
+        with open(jf, "r") as f:
             js_code += f.read() + "\n"
+    serialized_code = base64.b64encode(js_code.encode("utf-8")).decode()
 
-    serialized_code = base64.b64encode(js_code.encode("utf-8")).decode("utf-8")
+    sim_dir = os.path.join(project_name, "simulator")
+    os.makedirs(sim_dir, exist_ok=True)
 
-    simulator_dir = os.path.join(project_name, "simulator")
-    os.makedirs(simulator_dir, exist_ok=True)
-
-    html_file = os.path.join(simulator_dir, "simulator.html")
+    html_file = os.path.join(sim_dir, "simulator.html")
     with open(html_file, "w") as f:
         f.write("""<!DOCTYPE html>
 <html>
@@ -1090,49 +1267,48 @@ def run_simulator(project_name):
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
-    <div id="app">
-        <iframe id="ios-app-frame" src="src/main.js"></iframe>
-    </div>
-    <script>
-        new Vue({ el: '#app' });
-    </script>
+  <div id="app">
+    <iframe id="ios-app-frame" src="src/main.js"></iframe>
+  </div>
+  <script> new Vue({ el: '#app' }); </script>
 </body>
 </html>""")
 
-    package_json_path = os.path.join(simulator_dir, "package.json")
-    with open(package_json_path, "w") as f:
-        f.write(json.dumps({
-            "name": f"{project_name}-simulator",
-            "version": "1.0.0",
-            "description": "Node-based iOS simulator for testing",
-            "main": "index.js",
-            "scripts": {"start": "node index.js"},
-            "author": "Your Name",
-            "license": "ISC"
-        }, indent=2))
+    pkgjson = {
+        "name": f"{project_name}-simulator",
+        "version": "1.0.0",
+        "description": "Node-based iOS simulator for testing",
+        "main": "index.js",
+        "scripts": {"start": "node index.js"},
+        "author": "Your Name",
+        "license": "ISC"
+    }
+    with open(os.path.join(sim_dir, "package.json"), "w") as f:
+        f.write(json.dumps(pkgjson, indent=2))
 
-    index_js_path = os.path.join(simulator_dir, "index.js")
-    with open(index_js_path, "w") as f:
+    with open(os.path.join(sim_dir, "index.js"), "w") as f:
         f.write("""const express = require('express');
 const app = express();
 const port = 3000;
 app.use(express.static(__dirname));
-app.listen(port, () => { console.log(`Server listening on port ${port}`); });
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
 """)
 
-    simulator_src = os.path.join(simulator_dir, "src")
-    os.makedirs(simulator_src, exist_ok=True)
-    main_js_path = os.path.join(simulator_src, "main.js")
-    with open(main_js_path, "w") as f:
+    sim_src = os.path.join(sim_dir, "src")
+    os.makedirs(sim_src, exist_ok=True)
+
+    with open(os.path.join(sim_src, "main.js"), "w") as f:
         f.write(f"""import './index.js';
 const serializedCode = '{serialized_code}';
 const decodedCode = atob(serializedCode);
 eval(decodedCode);
 """)
 
-    console.log(f"[green]iOS simulator created in '{simulator_dir}'.[/green]")
+    console.log(f"[green]Simulator setup in '{sim_dir}'.[/green]")
     try:
-        subprocess.run(f"cd {simulator_dir} && npm install && npm start", shell=True, check=True)
+        subprocess.run(f"cd {sim_dir} && npm install && npm start", shell=True, check=True)
     except subprocess.CalledProcessError as e:
         console.log(f"[red]Simulator failed: {e}[/red]")
 
@@ -1140,10 +1316,9 @@ eval(decodedCode);
 @click.argument("project_name")
 @click.option("--language", prompt="Language (swift/objc/rust)", help="Specify language for debugging.")
 def compile_and_debug(project_name, language):
-    """Compile and debug source code in real-time using Gemini (simulation)."""
     src_file = os.path.join(project_name, "src", "main.js")
     if not os.path.exists(src_file):
-        console.log(f"[red]Source file '{src_file}' not found.[/red]")
+        console.log(f"[red]No source '{src_file}' found.[/red]")
         return
     try:
         with open(src_file, "r") as f:
@@ -1151,39 +1326,33 @@ def compile_and_debug(project_name, language):
 
         lang_lower = language.lower()
         if lang_lower == "swift":
-            compiled_code = "// Compiled Swift code placeholder"
+            compiled = "// Swift code placeholder"
         elif lang_lower == "objc":
-            compiled_code = "// Compiled Objective-C code placeholder"
+            compiled = "// ObjC code placeholder"
         elif lang_lower == "rust":
-            compiled_code = "// Compiled Rust code placeholder"
+            compiled = "// Rust code placeholder"
         else:
-            console.log(f"[red]Unsupported language: {language}.[/red]")
+            console.log(f"[red]Unsupported language '{language}'.[/red]")
             return
 
         if config.get("enable_debugging", False):
-            console.log("[blue]Using Gemini for debugging (simulation)...[/blue]")
-            debugging_result = {
+            console.log("[blue]Using Gemini debugging (simulation)...[/blue]")
+            dbg_result = {
                 "status": "success",
                 "code": source_code + "\n// Debugged",
                 "changes": "Added debug logging"
             }
-            if debugging_result["status"] == "success":
-                console.log("[green]Gemini debugging successful.[/green]")
-                console.print(Panel(
-                    f"**Original Code:**\n{source_code}\n\n**Generated Code:**\n{debugging_result['code']}",
-                    title="Generated Code"
-                ))
+            if dbg_result["status"] == "success":
+                console.log("[green]Debug success.[/green]")
+                console.print(Panel(f"**Original:**\n{source_code}\n\n**Debugged:**\n{dbg_result['code']}",
+                                    title="Generated Code"))
                 with open(src_file, "w") as wf:
-                    wf.write(debugging_result["code"])
-                console.print(Panel(
-                    f"**Changes:**\n{debugging_result['changes']}",
-                    title="Changes"
-                ))
+                    wf.write(dbg_result["code"])
+                console.print(Panel(f"**Changes:**\n{dbg_result['changes']}",
+                                    title="Changes"))
         else:
-            console.print(Panel(
-                f"**Original Code:**\n{source_code}\n\n**Compiled Code:**\n{compiled_code}",
-                title="Compiled Code"
-            ))
+            console.print(Panel(f"**Original:**\n{source_code}\n\n**Compiled:**\n{compiled}",
+                                title="Compiled Code"))
     except Exception as e:
         console.log(f"[red]Error: {e}[/red]")
         if Prompt.ask("Retry or Exit?", choices=["Retry", "Exit"]).lower() == "exit":
@@ -1192,31 +1361,28 @@ def compile_and_debug(project_name, language):
 @yesco.command()
 @click.argument("command", nargs=-1)
 def jedimt_cli(command):
-    """Pass-through to Jedimt core commands (cd, apt, compile, run, etc.)."""
     if not command:
-        console.print("[red]No command provided for Jedimt.[/red]")
+        console.print("[red]No command for Jedimt.[/red]")
         return
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
-    jedimt_instance = Jedimt(mode="compile", gemini_api_key=gemini_api_key)
-    jedimt_instance.shell_command(list(command))
+    jinst = Jedimt(mode="compile", gemini_api_key=gemini_api_key)
+    jinst.shell_command(list(command))
 
 
-# =============================================================================
-# 9) IPython Extension Loader (if in a notebook)
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 9) IPython Extension Loader
+# -----------------------------------------------------------------------------
 def load_ipython_extension(ipython):
-    """Register the AptAnMagics if ipywidgets is available."""
     if not ipywidgets_available:
-        print("ipywidgets (and IPython) not installed; cannot load extension.")
+        print("ipywidgets not installed.")
     else:
         ipython.register_magics(AptAnMagics)
 
 
-# =============================================================================
-# 10) create_interface - for Notebook usage
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 10) create_interface
+# -----------------------------------------------------------------------------
 def create_interface(gemini_api_key=None):
-    """Create and display the ipywidgets interface, if available."""
     if not ipywidgets_available:
         print("ipywidgets not installed; cannot create interface.")
         return None
@@ -1225,11 +1391,10 @@ def create_interface(gemini_api_key=None):
     return interface
 
 
-# =============================================================================
-# 11) Main Entry Point
-# =============================================================================
+# -----------------------------------------------------------------------------
+# 11) main()
+# -----------------------------------------------------------------------------
 def main():
-    """Entry point for running from the command line."""
     if "--yesco" in sys.argv:
         sys.argv.remove("--yesco")
         yesco()
@@ -1237,24 +1402,19 @@ def main():
         if kivy_available:
             InterfaceMapperApp().run()
         else:
-            print("Kivy not installed. GUI features are disabled.")
+            print("Kivy not installed. GUI disabled.")
     elif "--version" in sys.argv:
         console.print(f"Jedimt/Yesco Version: {__version__}")
     elif "--help" in sys.argv:
-        # Show the help for the 'yesco' group
         with click.Context(yesco) as ctx:
             click.echo(yesco.get_help(ctx))
     elif len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
-        # Treat as a Jedimt command
         gemini_api_key = os.environ.get("GEMINI_API_KEY")
-        jedimt_instance = Jedimt(mode="compile", gemini_api_key=gemini_api_key)
-        jedimt_instance.shell_command(sys.argv[1:])
+        jinst = Jedimt(mode="compile", gemini_api_key=gemini_api_key)
+        jinst.shell_command(sys.argv[1:])
     else:
-        console.print("No valid command specified. Use --yesco, --gui, --version, --help, or pass a Jedimt command.")
+        console.print("No valid command. Use --yesco, --gui, --version, --help, or Jedimt commands.")
 
 
-# =============================================================================
-# 12) if __name__ == "__main__": main()
-# =============================================================================
 if __name__ == "__main__":
     main()
